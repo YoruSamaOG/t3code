@@ -92,7 +92,14 @@ const unavailableReason = Effect.fn("BrowserImport.unavailableReason")(function*
 > {
   if (!definition.platforms.includes(context.platform)) return "unsupportedPlatform";
   if (!(yield* isSourceInstalled(definition, context))) return "notInstalled";
-  if (yield* isSourceRunning(definition, context)) return "browserRunning";
+  // Chromium's cookie database is read through SQLite's `VACUUM INTO`, which
+  // takes one consistent snapshot including committed WAL rows while the
+  // browser is open. Firefox remains guarded by its profile lock because its
+  // running-state behavior differs across platforms and has not been covered
+  // by the same live-import verification.
+  if (definition.engine === "firefox" && (yield* isSourceRunning(definition, context))) {
+    return "browserRunning";
+  }
   // Safari's jar is found by `stat`, which TCC permits without Full Disk
   // Access — so a Safari that lists as ready may still refuse the read. Probe
   // the grant here, so the wizard can open on the permission step and a
