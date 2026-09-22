@@ -63,7 +63,7 @@ const MAC_AUXILIARY_STRIP_SHORT_EDGE_RATIO = 0.1;
 
 // CoreGraphics returns windows in front-to-back order, but some apps put thin
 // or transparent helper windows ahead of their real window. Keep that order
-// while ignoring helpers shaped like an edge strip beside the app's largest window.
+// while ignoring untitled helpers aligned over an edge of the app's largest window.
 // Window titles need Screen Recording, which the snapshot service has already
 // requested by the time this runs.
 const MAC_LOOKUP_SCRIPT = `
@@ -139,6 +139,9 @@ async function macActiveWindow(): Promise<ActiveWindow | undefined> {
   const isAuxiliaryStrip = (window: (typeof visible)[number]) =>
     largest !== undefined &&
     window !== largest &&
+    window.title.trim() === "" &&
+    window.bounds.x === largest.bounds.x &&
+    window.bounds.y === largest.bounds.y &&
     ((window.bounds.width >= largest.bounds.width * MAC_AUXILIARY_STRIP_LONG_EDGE_RATIO &&
       window.bounds.height <= largest.bounds.height * MAC_AUXILIARY_STRIP_SHORT_EDGE_RATIO) ||
       (window.bounds.height >= largest.bounds.height * MAC_AUXILIARY_STRIP_LONG_EDGE_RATIO &&

@@ -109,7 +109,7 @@ it("skips transparent and tiny auxiliary windows before the main window", async 
       },
       {
         id: 2,
-        title: "Overlay",
+        title: "",
         bounds: { x: 0, y: 0, width: 1_680, height: 68 },
       },
       {
@@ -162,6 +162,44 @@ it("keeps a small frontmost window ahead of a larger window", async () => {
   );
 
   assert.strictEqual((await activeWindow("darwin"))?.id, 6);
+});
+
+it("keeps a titled edge-strip window ahead of a larger window", async () => {
+  stubMacLookup(
+    macLookup([
+      {
+        id: 8,
+        title: "Palette",
+        bounds: { x: 0, y: 0, width: 1_000, height: 50 },
+      },
+      {
+        id: 9,
+        title: "Document",
+        bounds: { x: 0, y: 0, width: 1_000, height: 800 },
+      },
+    ]),
+  );
+
+  assert.strictEqual((await activeWindow("darwin"))?.id, 8);
+});
+
+it("keeps an offset untitled edge-strip window ahead of a larger window", async () => {
+  stubMacLookup(
+    macLookup([
+      {
+        id: 10,
+        title: "",
+        bounds: { x: 100, y: 100, width: 1_000, height: 50 },
+      },
+      {
+        id: 11,
+        title: "Document",
+        bounds: { x: 0, y: 0, width: 1_000, height: 800 },
+      },
+    ]),
+  );
+
+  assert.strictEqual((await activeWindow("darwin"))?.id, 10);
 });
 
 it("resolves undefined when macOS has no frontmost window", async () => {
