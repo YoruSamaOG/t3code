@@ -58,12 +58,10 @@ const decodeMacActiveWindowLookup = Schema.decodeUnknownSync(
   Schema.fromJsonString(MacActiveWindowLookup),
 );
 
-const MAC_AUXILIARY_STRIP_LONG_EDGE_RATIO = 0.8;
-const MAC_AUXILIARY_STRIP_SHORT_EDGE_RATIO = 0.1;
-
-// CoreGraphics returns windows in front-to-back order, but some apps put thin
-// or transparent helper windows ahead of their real window. Keep that order
-// while ignoring untitled helpers aligned over an edge of the app's largest window.
+// CoreGraphics returns windows in front-to-back order, but some apps, such as
+// Chrome, Brave, and Zed, put transparent or untitled strip windows ahead of
+// their real window. Keep that order while ignoring untitled strips that span
+// the full width or height of the app's largest window.
 // Window titles need Screen Recording, which the snapshot service has already
 // requested by the time this runs.
 const MAC_LOOKUP_SCRIPT = `
@@ -112,7 +110,7 @@ function runMacLookup(): Promise<string> {
     NodeChildProcess.execFile(
       "/usr/bin/osascript",
       ["-l", "JavaScript", "-e", MAC_LOOKUP_SCRIPT],
-      { timeout: MAC_LOOKUP_TIMEOUT_MS, maxBuffer: 64 * 1024 },
+      { timeout: MAC_LOOKUP_TIMEOUT_MS, maxBuffer: 1024 * 1024 },
       (error, stdout) => {
         if (error) reject(error);
         else resolve(stdout);
@@ -140,12 +138,12 @@ async function macActiveWindow(): Promise<ActiveWindow | undefined> {
     largest !== undefined &&
     window !== largest &&
     window.title.trim() === "" &&
-    window.bounds.x === largest.bounds.x &&
-    window.bounds.y === largest.bounds.y &&
-    ((window.bounds.width >= largest.bounds.width * MAC_AUXILIARY_STRIP_LONG_EDGE_RATIO &&
-      window.bounds.height <= largest.bounds.height * MAC_AUXILIARY_STRIP_SHORT_EDGE_RATIO) ||
-      (window.bounds.height >= largest.bounds.height * MAC_AUXILIARY_STRIP_LONG_EDGE_RATIO &&
-        window.bounds.width <= largest.bounds.width * MAC_AUXILIARY_STRIP_SHORT_EDGE_RATIO));
+    ((window.bounds.x === largest.bounds.x &&
+      window.bounds.width === largest.bounds.width &&
+      window.bounds.height < largest.bounds.height) ||
+      (window.bounds.y === largest.bounds.y &&
+        window.bounds.height === largest.bounds.height &&
+        window.bounds.width < largest.bounds.width));
   const window = visible.find((candidate) => !isAuxiliaryStrip(candidate));
   if (!window) return undefined;
   return {

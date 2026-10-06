@@ -126,6 +126,23 @@ it("skips transparent and tiny auxiliary windows before the main window", async 
   assert.deepEqual(window?.bounds, { x: 0, y: 0, width: 1_680, height: 1_050 });
 });
 
+it("skips untitled full-width strips stacked above the main window", async () => {
+  stubMacLookup(
+    macLookup([
+      { id: 75, title: "", bounds: { x: 0, y: 39, width: 1_800, height: 41 } },
+      { id: 74, title: "", bounds: { x: 0, y: 80, width: 1_800, height: 81 } },
+      { id: 1691, title: "", bounds: { x: 0, y: 39, width: 1_800, height: 158 } },
+      {
+        id: 71,
+        title: "(10) Video - YouTube",
+        bounds: { x: 0, y: 161, width: 1_800, height: 1_008 },
+      },
+    ]),
+  );
+
+  assert.strictEqual((await activeWindow("darwin"))?.id, 71);
+});
+
 it("keeps an untitled frontmost dialog ahead of a titled parent", async () => {
   stubMacLookup(
     macLookup([
