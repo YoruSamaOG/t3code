@@ -60,10 +60,11 @@ const decodeMacActiveWindowLookup = Schema.decodeUnknownSync(
 
 // CoreGraphics returns windows in front-to-back order, but some apps, such as
 // Chrome, Brave, and Zed, put transparent or untitled strip windows ahead of
-// their real window. Keep that order while ignoring untitled strips that span
-// the full width or height of the app's largest window.
+// their real window. Keep that order while ignoring untitled thin strips that
+// span the full width or height of the app's largest window.
 // Window titles need Screen Recording, which the snapshot service has already
 // requested by the time this runs.
+const MAC_HELPER_STRIP_MAX_THICKNESS_RATIO = 0.25;
 const MAC_LOOKUP_SCRIPT = `
 ObjC.import("CoreGraphics");
 ObjC.import("AppKit");
@@ -140,10 +141,10 @@ async function macActiveWindow(): Promise<ActiveWindow | undefined> {
     window.title.trim() === "" &&
     ((window.bounds.x === largest.bounds.x &&
       window.bounds.width === largest.bounds.width &&
-      window.bounds.height < largest.bounds.height) ||
+      window.bounds.height <= largest.bounds.height * MAC_HELPER_STRIP_MAX_THICKNESS_RATIO) ||
       (window.bounds.y === largest.bounds.y &&
         window.bounds.height === largest.bounds.height &&
-        window.bounds.width < largest.bounds.width));
+        window.bounds.width <= largest.bounds.width * MAC_HELPER_STRIP_MAX_THICKNESS_RATIO));
   const window = visible.find((candidate) => !isAuxiliaryStrip(candidate));
   if (!window) return undefined;
   return {

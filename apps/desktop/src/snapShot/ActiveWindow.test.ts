@@ -143,6 +143,17 @@ it("skips untitled full-width strips stacked above the main window", async () =>
   assert.strictEqual((await activeWindow("darwin"))?.id, 71);
 });
 
+it("keeps a tall untitled window that shares the main window's width", async () => {
+  stubMacLookup(
+    macLookup([
+      { id: 12, title: "", bounds: { x: 0, y: 0, width: 800, height: 900 } },
+      { id: 13, title: "Document", bounds: { x: 0, y: 0, width: 800, height: 1_000 } },
+    ]),
+  );
+
+  assert.strictEqual((await activeWindow("darwin"))?.id, 12);
+});
+
 it("keeps an untitled frontmost dialog ahead of a titled parent", async () => {
   stubMacLookup(
     macLookup([
